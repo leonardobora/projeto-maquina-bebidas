@@ -8,9 +8,12 @@ from rich.spinner import Spinner
 from rich.text import Text
 from rich.align import Align
 
+import audio
+
 
 def animar_dispensar(console: Console, nome_bebida: str, duracao_s: float = 1.5) -> None:
     """Spinner Rich + texto 'Preparando sua {bebida}...' por duracao_s segundos."""
+    audio.tocar("dispensar")
     spinner = Spinner(
         "dots",
         text=Text(f" Preparando sua {nome_bebida}...", style="yellow"),
@@ -65,6 +68,7 @@ def _painel_tapa(texto_central: str, shift_chars: int) -> Panel:
 
 def animar_tapa(console: Console) -> None:
     """4 frames com texto explodindo + deslocamento horizontal, 2 loops. ~0.6s."""
+    audio.tocar("tapa")
     frames = [
         ("              ", 0),
         ("  *** TAPA! ***", 2),
