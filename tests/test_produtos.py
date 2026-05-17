@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
+import random
 from produtos import Produto, Catalogo, ProdutoNaoEncontrado, EstoqueZerado, IdJaExistente
 
 
@@ -107,6 +108,38 @@ class TestCatalogoCRUD(unittest.TestCase):
         c = Catalogo()
         with self.assertRaises(ProdutoNaoEncontrado):
             c.remover(99)
+
+
+class TestSortearComEstoque(unittest.TestCase):
+    def test_sortear_retorna_produto_com_estoque(self):
+        cat = Catalogo()
+        rng = random.Random(42)
+        for _ in range(50):
+            p = cat.sortear_com_estoque(rng=rng)
+            self.assertIsNotNone(p)
+            self.assertTrue(p.tem_estoque())
+
+    def test_sortear_nunca_retorna_produto_esgotado(self):
+        cat = Catalogo()
+        # zera tudo menos café (ID 4)
+        for produto in cat.listar():
+            if produto.id != 4:
+                produto.estoque = 0
+        rng = random.Random(7)
+        for _ in range(20):
+            p = cat.sortear_com_estoque(rng=rng)
+            self.assertEqual(p.id, 4)
+
+    def test_sortear_retorna_none_quando_tudo_esgotado(self):
+        cat = Catalogo()
+        for produto in cat.listar():
+            produto.estoque = 0
+        self.assertIsNone(cat.sortear_com_estoque())
+
+    def test_sortear_aceita_rng_none(self):
+        cat = Catalogo()
+        resultado = cat.sortear_com_estoque()
+        self.assertIsNotNone(resultado)
 
 
 if __name__ == "__main__":

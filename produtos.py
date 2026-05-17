@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
-from typing import List
+import random as _random
+from typing import List, Optional
 
 
 class ProdutoNaoEncontrado(Exception):
@@ -73,3 +74,12 @@ class Catalogo:
     def remover(self, id_: int) -> None:
         p = self.buscar(id_)
         self._produtos.remove(p)
+
+    def sortear_com_estoque(self, rng: Optional[_random.Random] = None) -> Optional[Produto]:
+        """Sorteia uniformemente entre produtos com estoque > 0.
+        Retorna None se todos estão esgotados."""
+        rng = rng or _random
+        disponiveis = [p for p in self._produtos if p.tem_estoque()]
+        if not disponiveis:
+            return None
+        return rng.choice(disponiveis)
