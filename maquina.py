@@ -423,15 +423,17 @@ def _admin_remover(console: Console, catalogo: Catalogo) -> None:
 # ============================================================================
 
 def main() -> None:
+    audio.init_audio()
     console = Console()
     catalogo = Catalogo()
     caixa = Caixa()
     vendas = 0
+    tapas_premiados = 0
 
     while True:
         console.clear()
         console.print(render_idle(catalogo.listar()))
-        console.print(render_visor("ESCOLHA UMA BEBIDA (1-5) · 'admin' · 'q' sair"))
+        console.print(render_visor("ESCOLHA UMA BEBIDA (1-5) · [T]apa · 'admin' · 'q' sair"))
 
         entrada = ler_entrada_idle(console)
         if entrada == "q":
@@ -439,7 +441,13 @@ def main() -> None:
             return
 
         if entrada == "admin":
-            handle_admin(console, catalogo, caixa, vendas)
+            handle_admin(console, catalogo, caixa, vendas, tapas_premiados)
+            continue
+
+        if entrada == "t":
+            ganhou = handle_tapa_livre(console, catalogo)
+            if ganhou:
+                tapas_premiados += 1
             continue
 
         try:
