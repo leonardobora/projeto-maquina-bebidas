@@ -66,5 +66,68 @@ class TestMensagens(unittest.TestCase):
             mensagem("inexistente")
 
 
+from eventos import (
+    ResultadoTapaLivre,
+    resolver_tapa_livre,
+    PROB_TAPA_LIVRE_BEBIDA,
+    PROB_TAPA_LIVRE_QUEBRA,
+    COOLDOWN_QUEBRA_SEGUNDOS,
+)
+
+
+class TestProbabilidadesTapaLivre(unittest.TestCase):
+    def test_constantes_tem_valores_esperados(self):
+        self.assertEqual(PROB_TAPA_LIVRE_BEBIDA, 0.20)
+        self.assertEqual(PROB_TAPA_LIVRE_QUEBRA, 0.10)
+        self.assertEqual(COOLDOWN_QUEBRA_SEGUNDOS, 10)
+
+    def test_enum_tem_tres_resultados(self):
+        valores = {r for r in ResultadoTapaLivre}
+        self.assertEqual(len(valores), 3)
+        self.assertIn(ResultadoTapaLivre.NADA, valores)
+        self.assertIn(ResultadoTapaLivre.BEBIDA_GRATIS, valores)
+        self.assertIn(ResultadoTapaLivre.QUEBRA, valores)
+
+
+class TestResolverTapaLivre(unittest.TestCase):
+    def test_distribuicao_aproximada(self):
+        rng = random.Random(2026)
+        amostras = 10000
+        contagem = {r: 0 for r in ResultadoTapaLivre}
+        for _ in range(amostras):
+            contagem[resolver_tapa_livre(rng=rng)] += 1
+        self.assertAlmostEqual(contagem[ResultadoTapaLivre.QUEBRA] / amostras, 0.10, delta=0.02)
+        self.assertAlmostEqual(contagem[ResultadoTapaLivre.BEBIDA_GRATIS] / amostras, 0.20, delta=0.02)
+        self.assertAlmostEqual(contagem[ResultadoTapaLivre.NADA] / amostras, 0.70, delta=0.02)
+
+    def test_aceita_rng_none(self):
+        resultado = resolver_tapa_livre()
+        self.assertIn(resultado, list(ResultadoTapaLivre))
+
+
+class TestMensagensTapaLivre(unittest.TestCase):
+    def test_pool_tapa_livre_nada_nao_vazio(self):
+        msg = mensagem("tapa_livre_nada", rng=random.Random(0))
+        self.assertTrue(len(msg) > 0)
+
+    def test_pool_tapa_livre_bebida_substitui_nome(self):
+        rng = random.Random(0)
+        encontrou = False
+        for _ in range(50):
+            msg = mensagem("tapa_livre_bebida", bebida="MONSTER", rng=rng)
+            if "MONSTER" in msg:
+                encontrou = True
+                break
+        self.assertTrue(encontrou)
+
+    def test_pool_tapa_livre_bebida_vazio_nao_vazio(self):
+        msg = mensagem("tapa_livre_bebida_vazio", rng=random.Random(0))
+        self.assertTrue(len(msg) > 0)
+
+    def test_pool_tapa_livre_quebra_nao_vazio(self):
+        msg = mensagem("tapa_livre_quebra", rng=random.Random(0))
+        self.assertTrue(len(msg) > 0)
+
+
 if __name__ == "__main__":
     unittest.main()
