@@ -125,6 +125,7 @@ def render_admin(
     produtos: List[Produto],
     caixa_total_centavos: int,
     vendas_sessao: int,
+    tapas_premiados: int = 0,
 ) -> Panel:
     tabela = Table(show_header=True, header_style="bold cyan")
     tabela.add_column("ID", justify="center", width=4)
@@ -148,7 +149,8 @@ def render_admin(
     )
     rodape = Panel(
         Align.center(Text(
-            f"Caixa: {_formatar_preco(caixa_total_centavos)}  │  Vendas hoje: {vendas_sessao}",
+            f"Caixa: {_formatar_preco(caixa_total_centavos)}  │  "
+            f"Vendas: {vendas_sessao}  │  Tapas premiados: {tapas_premiados}",
             style="dim white"
         )),
         border_style="cyan",

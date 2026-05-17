@@ -318,6 +318,7 @@ def handle_admin(
     catalogo: Catalogo,
     caixa: Caixa,
     vendas: int,
+    tapas_premiados: int = 0,
 ) -> None:
     # Login
     tentativas = 3
@@ -342,7 +343,7 @@ def handle_admin(
     # Loop admin
     while True:
         console.clear()
-        console.print(render_admin(catalogo.listar(), caixa.total_em_centavos(), vendas))
+        console.print(render_admin(catalogo.listar(), caixa.total_em_centavos(), vendas, tapas_premiados))
         comando = Prompt.ask(
             "[bold cyan]Comando[/bold cyan]",
             choices=["a", "e", "r", "v"],
