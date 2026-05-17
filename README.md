@@ -112,6 +112,17 @@ Frames adicionais previstos: "inserindo dinheiro", "calculando troco", "compra c
 
 ---
 
+## Tapa Livre (novo!)
+
+Pressione `T` no IDLE pra dar um tapa na máquina a qualquer momento:
+- 70% das vezes: nada acontece (a máquina te ignora)
+- 20% das vezes: uma bebida aleatória com estoque cai de graça
+- 10% das vezes: a máquina quebra e fica em manutenção por 10s
+
+Pra rodar sem som: `MAQUINA_MUTE=1 python maquina.py` (ou `$env:MAQUINA_MUTE='1'` no PowerShell).
+
+---
+
 ## Política PUCPR de IA
 
 Resolução CONSUN 274/2024: uso de IA deve ser **declarado**, não escondido. Bloco-padrão será adicionado em `DECLARACAO-IA.md` antes da submissão.
