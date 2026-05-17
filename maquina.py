@@ -20,7 +20,15 @@ from produtos import (
     IdJaExistente,
 )
 from caixa import Caixa, DENOMINACOES, TrocoImpossivel
-from eventos import deve_travar, tapa_resolve, mensagem, MAX_TENTATIVAS_TAPA
+from eventos import (
+    deve_travar,
+    tapa_resolve,
+    mensagem,
+    MAX_TENTATIVAS_TAPA,
+    resolver_tapa_livre,
+    ResultadoTapaLivre,
+    COOLDOWN_QUEBRA_SEGUNDOS,
+)
 from ui import (
     render_idle,
     render_visor,
@@ -29,6 +37,7 @@ from ui import (
     render_admin,
 )
 from animacoes import animar_dispensar, animar_troco, animar_tapa
+import audio
 
 
 SENHA_ADMIN = "1234"
@@ -50,6 +59,67 @@ def _formatar_preco(centavos: int) -> str:
     sinal = "-" if centavos < 0 else ""
     centavos = abs(centavos)
     return f"{sinal}R${centavos // 100},{centavos % 100:02d}"
+
+
+# ============================================================================
+# Cooldown da máquina quebrada
+# ============================================================================
+
+def executar_cooldown(console: Console, segundos: int, catalogo: Catalogo) -> None:
+    """Bloqueia o terminal por `segundos`, redesenhando o IDLE + visor com countdown.
+    User não consegue interagir durante o cooldown (sleep blocking)."""
+    for restante in range(segundos, 0, -1):
+        console.clear()
+        console.print(render_idle(catalogo.listar()))
+        console.print(render_visor(
+            mensagem("cooldown").format(segundos=restante),
+            tipo="erro"
+        ))
+        time.sleep(1)
+
+
+# ============================================================================
+# Tapa livre (acionável no IDLE)
+# ============================================================================
+
+def handle_tapa_livre(console: Console, catalogo: Catalogo) -> bool:
+    """Executa o fluxo do tapa livre. Retorna True se ganhou bebida grátis.
+    Pode bloquear por COOLDOWN_QUEBRA_SEGUNDOS se quebrar a máquina."""
+    animar_tapa(console)
+    resultado = resolver_tapa_livre()
+
+    if resultado == ResultadoTapaLivre.NADA:
+        console.print(render_visor(mensagem("tapa_livre_nada"), tipo="info"))
+        time.sleep(1.5)
+        return False
+
+    if resultado == ResultadoTapaLivre.BEBIDA_GRATIS:
+        produto = catalogo.sortear_com_estoque()
+        if produto is None:
+            console.print(render_visor(
+                mensagem("tapa_livre_bebida_vazio"),
+                tipo="info"
+            ))
+            time.sleep(1.5)
+            return False
+        console.print(render_visor(
+            mensagem("tapa_livre_bebida", bebida=produto.nome.upper()),
+            tipo="ok"
+        ))
+        time.sleep(1.2)
+        audio.tocar("bebida_gratis")
+        animar_dispensar(console, produto.nome.upper())
+        produto.decrementar()
+        console.print(render_visor(f"Aproveite sua {produto.nome} grátis!", tipo="ok"))
+        time.sleep(1.5)
+        return True
+
+    # QUEBRA
+    audio.tocar("quebra")
+    console.print(render_visor(mensagem("tapa_livre_quebra"), tipo="erro"))
+    time.sleep(1.0)
+    executar_cooldown(console, COOLDOWN_QUEBRA_SEGUNDOS, catalogo)
+    return False
 
 
 # ============================================================================
