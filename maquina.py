@@ -36,11 +36,12 @@ from ui import (
     render_troco_completo,
     render_admin,
 )
-from animacoes import animar_dispensar, animar_troco, animar_tapa
+from animacoes import animar_dispensar, animar_troco, animar_tapa, animar_creditos
 import audio
 
 
 SENHA_ADMIN = "1234"
+TAPAS_KONAMI = 5
 
 
 class Estado(Enum):
@@ -120,6 +121,17 @@ def handle_tapa_livre(console: Console, catalogo: Catalogo) -> bool:
     time.sleep(1.0)
     executar_cooldown(console, COOLDOWN_QUEBRA_SEGUNDOS, catalogo)
     return False
+
+
+# ============================================================================
+# Easter egg (Konami: 5 tapas seguidos)
+# ============================================================================
+
+def mostrar_creditos(console: Console) -> None:
+    """Animação de stick figure + card de créditos. Espera ENTER pra voltar."""
+    console.clear()
+    animar_creditos(console)
+    Prompt.ask("", default="", show_default=False)
 
 
 # ============================================================================
@@ -430,6 +442,7 @@ def main() -> None:
     caixa = Caixa()
     vendas = 0
     tapas_premiados = 0
+    tapas_consecutivos = 0
 
     while True:
         console.clear()
@@ -442,6 +455,7 @@ def main() -> None:
             return
 
         if entrada == "admin":
+            tapas_consecutivos = 0
             handle_admin(console, catalogo, caixa, vendas, tapas_premiados)
             continue
 
@@ -449,7 +463,14 @@ def main() -> None:
             ganhou = handle_tapa_livre(console, catalogo)
             if ganhou:
                 tapas_premiados += 1
+            tapas_consecutivos += 1
+            if tapas_consecutivos >= TAPAS_KONAMI:
+                mostrar_creditos(console)
+                tapas_consecutivos = 0
             continue
+
+        # Qualquer outra entrada quebra a sequência konami
+        tapas_consecutivos = 0
 
         try:
             id_ = int(entrada)

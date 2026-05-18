@@ -81,3 +81,44 @@ def animar_tapa(console: Console) -> None:
             for texto, shift in frames:
                 live.update(_painel_tapa(texto, shift))
                 time.sleep(0.08)
+
+
+_FRAMES_STICK = [
+    # (linha1, linha2, linha3, linha4) — cada frame com 4 linhas pra simular pulo
+    ("       ", "   o   ", "  /|\\  ", "  / \\  "),  # idle no chão
+    ("   o   ", "  /|\\  ", "   |   ", "  / \\  "),  # pulou (corpo subiu 1 linha)
+    ("       ", "  \\o/  ", "   |   ", "  / \\  "),  # braços pra cima
+    ("       ", "   o   ", "  /|\\  ", "  / \\  "),  # idle de volta
+]
+
+
+def _painel_creditos(frame: tuple) -> Panel:
+    stick = "\n".join(frame)
+    conteudo = Text()
+    conteudo.append("\n")
+    conteudo.append(stick, style="bold cyan")
+    conteudo.append("\n\n")
+    conteudo.append("Desenvolvido por\n", style="dim white")
+    conteudo.append("LEONARDO BORA\n", style="bold magenta")
+    conteudo.append("\n")
+    conteudo.append("linkedin.com/in/leonardobora\n", style="cyan underline")
+    conteudo.append("\n")
+    conteudo.append("[pressione ENTER pra voltar]", style="dim italic")
+    return Panel(
+        Align.center(conteudo),
+        border_style="bold magenta",
+        title="✨ EASTER EGG ✨",
+        title_align="center",
+        padding=(1, 4),
+    )
+
+
+def animar_creditos(console: Console, loops: int = 3, delay_s: float = 0.18) -> None:
+    """Stick figure feliz pulando + card de créditos. Dura ~2s, depois deixa parado."""
+    with Live(_painel_creditos(_FRAMES_STICK[0]), console=console, refresh_per_second=15) as live:
+        for _ in range(loops):
+            for frame in _FRAMES_STICK:
+                live.update(_painel_creditos(frame))
+                time.sleep(delay_s)
+        # Para no primeiro frame (idle) pra leitura
+        live.update(_painel_creditos(_FRAMES_STICK[0]))
