@@ -123,14 +123,25 @@ def handle_tapa_livre(console: Console, catalogo: Catalogo) -> bool:
 
 
 # ============================================================================
-# Easter egg (Konami: 5 tapas seguidos)
+# Easter egg (tecla [C]reditos no IDLE)
 # ============================================================================
 
 def mostrar_creditos(console: Console) -> None:
-    """Animação de stick figure + card de créditos. Espera ENTER pra voltar."""
+    """Donut 3D + card de créditos. Bloqueia até user dar ENTER.
+    Limpa o stdin antes do input pra descartar ENTERs apertados durante a animação."""
     console.clear()
-    animar_creditos(console)
-    Prompt.ask("", default="", show_default=False)
+    animar_creditos(console, duracao_s=3.0)
+    # No Windows, msvcrt.kbhit consome teclas pendentes no buffer
+    try:
+        import msvcrt
+        while msvcrt.kbhit():
+            msvcrt.getch()
+    except ImportError:
+        pass
+    try:
+        input()
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 # ============================================================================
