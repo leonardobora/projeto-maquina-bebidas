@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 import time
 from typing import Dict
 from rich.console import Console
@@ -83,45 +84,73 @@ def animar_tapa(console: Console) -> None:
                 time.sleep(0.08)
 
 
-# Lata genérica em ASCII + vapor frio que muda de posição em cada frame.
-# Cada frame tem 9 linhas: 2 de vapor + 7 da lata estática.
-_LATA_BASE = [
-    "  _________  ",
-    " /  ___    \\ ",
-    "|  /   \\    |",
-    "| | BFIA |  |",
-    "|  \\___/    |",
-    "|           |",
-    "|___________|",
-]
-_FRAMES_VAPOR = [
-    ["   °  °  °   ", "    °   °    "],
-    ["  °   °      ", "     °  °  ° "],
-    ["    °     °  ", "  °  °   °   "],
-    ["   °   °  °  ", "      °  °   "],
-]
+# Spinning donut clássico — porte do donut.c (Andy Sloane, 2006).
+# https://www.a1k0n.net/2011/07/20/donut-math.html
+_DONUT_W = 48
+_DONUT_H = 18
+_DONUT_CHARS = ".,-~:;=!*#$@"
 
 
-def _frame_lata(idx: int) -> list:
-    return _FRAMES_VAPOR[idx] + _LATA_BASE
+def _render_donut(A: float, B: float) -> str:
+    """Renderiza um frame do toroide rotacionado por A (eixo X) e B (eixo Z).
+    Fórmula clássica de https://www.a1k0n.net/2011/07/20/donut-math.html"""
+    z = [0.0] * (_DONUT_W * _DONUT_H)
+    b = [" "] * (_DONUT_W * _DONUT_H)
+    sin_A, cos_A = math.sin(A), math.cos(A)
+    sin_B, cos_B = math.sin(B), math.cos(B)
+    k1 = 18  # distância projetada do eixo X (controla "tamanho")
+
+    j = 0.0  # phi: ângulo em torno do eixo Y
+    while j < 6.28:
+        sin_phi, cos_phi = math.sin(j), math.cos(j)
+        i = 0.0  # theta: posição no círculo da seção
+        while i < 6.28:
+            sin_theta, cos_theta = math.sin(i), math.cos(i)
+            h = cos_theta + 2  # R2 + R1*cos(theta), com R2=2 e R1=1
+            D = 1 / (sin_theta * sin_A * cos_phi + cos_phi * h * sin_A + 5)  # placeholder; recalcula abaixo
+            # Coordenadas 3D antes da projeção:
+            circ_x = h * cos_phi
+            circ_y = h * sin_phi
+            circ_z = sin_theta
+            # Aplicar rotação A no eixo X e B no eixo Z:
+            x = circ_x * cos_B + (circ_y * cos_A - circ_z * sin_A) * sin_B
+            y = -circ_x * sin_B + (circ_y * cos_A - circ_z * sin_A) * cos_B
+            zp = circ_y * sin_A + circ_z * cos_A + 5  # distância do "observador"
+            ooz = 1 / zp
+            xp = int(_DONUT_W / 2 + k1 * ooz * x)
+            yp = int(_DONUT_H / 2 - (k1 / 2) * ooz * y)
+            # Luminância: produto escalar entre normal da superfície e luz (em (0, 1, -1))
+            lum = (cos_phi * cos_theta * sin_B
+                   - cos_A * cos_theta * sin_phi
+                   - sin_A * sin_theta
+                   + cos_B * (cos_A * sin_theta - cos_theta * sin_A * sin_phi))
+            if 0 <= yp < _DONUT_H and 0 <= xp < _DONUT_W and ooz > z[xp + _DONUT_W * yp]:
+                z[xp + _DONUT_W * yp] = ooz
+                idx = int(lum * 8)
+                b[xp + _DONUT_W * yp] = _DONUT_CHARS[idx if idx > 0 else 0]
+            i += 0.04
+        j += 0.10
+
+    return "\n".join("".join(b[i * _DONUT_W:(i + 1) * _DONUT_W]) for i in range(_DONUT_H))
 
 
-def _painel_creditos(frame_idx: int) -> Panel:
-    linhas = _frame_lata(frame_idx)
+def _painel_creditos(A: float, B: float) -> Panel:
+    donut = _render_donut(A, B)
     conteudo = Text()
-    conteudo.append("\n")
-    # Vapor em ciano claro, lata em amarelo
-    for i, linha in enumerate(linhas):
-        if i < 2:
-            conteudo.append(linha, style="bold cyan")
-        else:
-            conteudo.append(linha, style="bold yellow")
-        conteudo.append("\n")
-    conteudo.append("\n")
+    conteudo.append(donut, style="bold yellow")
+    conteudo.append("\n\n")
     conteudo.append("Desenvolvido por\n", style="dim white")
     conteudo.append("LEONARDO BORA\n", style="bold magenta")
     conteudo.append("\n")
-    conteudo.append("linkedin.com/in/leonardobora\n", style="cyan underline")
+    # Hyperlink clicável via Rich OSC 8 (funciona em Windows Terminal, iTerm, Kitty)
+    conteudo.append(
+        "linkedin.com/in/leonardobora\n",
+        style="link https://linkedin.com/in/leonardobora cyan underline",
+    )
+    conteudo.append("\n")
+    conteudo.append("Introdução à Linguagem Python · Turma U\n", style="dim white")
+    conteudo.append("Pós-graduação IA & Ciência de Dados · PUCPR\n", style="dim white")
+    conteudo.append("2026\n", style="dim white")
     conteudo.append("\n")
     conteudo.append("[pressione ENTER pra voltar]", style="dim italic")
     return Panel(
@@ -133,12 +162,14 @@ def _painel_creditos(frame_idx: int) -> Panel:
     )
 
 
-def animar_creditos(console: Console, loops: int = 4, delay_s: float = 0.22) -> None:
-    """Lata estática com vapor subindo + card de créditos. Loop infinito até user dar ENTER."""
-    with Live(_painel_creditos(0), console=console, refresh_per_second=15) as live:
-        for _ in range(loops):
-            for i in range(len(_FRAMES_VAPOR)):
-                live.update(_painel_creditos(i))
-                time.sleep(delay_s)
-        # Para no frame 0 pra leitura
-        live.update(_painel_creditos(0))
+def animar_creditos(console: Console, duracao_s: float = 6.0) -> None:
+    """Donut 3D girando + card de créditos. Anima por `duracao_s` segundos,
+    depois congela no último frame até o caller chamar input()."""
+    A, B = 1.0, 1.0
+    with Live(_painel_creditos(A, B), console=console, refresh_per_second=20) as live:
+        inicio = time.time()
+        while time.time() - inicio < duracao_s:
+            A += 0.07
+            B += 0.03
+            live.update(_painel_creditos(A, B))
+            time.sleep(0.04)
