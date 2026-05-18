@@ -41,7 +41,6 @@ import audio
 
 
 SENHA_ADMIN = "1234"
-TAPAS_KONAMI = 5
 
 
 class Estado(Enum):
@@ -442,12 +441,11 @@ def main() -> None:
     caixa = Caixa()
     vendas = 0
     tapas_premiados = 0
-    tapas_consecutivos = 0
 
     while True:
         console.clear()
         console.print(render_idle(catalogo.listar()))
-        console.print(render_visor("ESCOLHA UMA BEBIDA (1-5) · [T]apa · 'admin' · 'q' sair"))
+        console.print(render_visor("ESCOLHA UMA BEBIDA (1-5) · [T]apa · [C]reditos · 'admin' · 'q' sair"))
 
         entrada = ler_entrada_idle(console)
         if entrada == "q":
@@ -455,7 +453,6 @@ def main() -> None:
             return
 
         if entrada == "admin":
-            tapas_consecutivos = 0
             handle_admin(console, catalogo, caixa, vendas, tapas_premiados)
             continue
 
@@ -463,14 +460,11 @@ def main() -> None:
             ganhou = handle_tapa_livre(console, catalogo)
             if ganhou:
                 tapas_premiados += 1
-            tapas_consecutivos += 1
-            if tapas_consecutivos >= TAPAS_KONAMI:
-                mostrar_creditos(console)
-                tapas_consecutivos = 0
             continue
 
-        # Qualquer outra entrada quebra a sequência konami
-        tapas_consecutivos = 0
+        if entrada == "c":
+            mostrar_creditos(console)
+            continue
 
         try:
             id_ = int(entrada)
