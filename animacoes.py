@@ -83,21 +83,41 @@ def animar_tapa(console: Console) -> None:
                 time.sleep(0.08)
 
 
-_FRAMES_STICK = [
-    # (linha1, linha2, linha3, linha4) — cada frame com 4 linhas pra simular pulo
-    ("       ", "   o   ", "  /|\\  ", "  / \\  "),  # idle no chão
-    ("   o   ", "  /|\\  ", "   |   ", "  / \\  "),  # pulou (corpo subiu 1 linha)
-    ("       ", "  \\o/  ", "   |   ", "  / \\  "),  # braços pra cima
-    ("       ", "   o   ", "  /|\\  ", "  / \\  "),  # idle de volta
+# Lata genérica em ASCII + vapor frio que muda de posição em cada frame.
+# Cada frame tem 9 linhas: 2 de vapor + 7 da lata estática.
+_LATA_BASE = [
+    "  _________  ",
+    " /  ___    \\ ",
+    "|  /   \\    |",
+    "| | BFIA |  |",
+    "|  \\___/    |",
+    "|           |",
+    "|___________|",
+]
+_FRAMES_VAPOR = [
+    ["   °  °  °   ", "    °   °    "],
+    ["  °   °      ", "     °  °  ° "],
+    ["    °     °  ", "  °  °   °   "],
+    ["   °   °  °  ", "      °  °   "],
 ]
 
 
-def _painel_creditos(frame: tuple) -> Panel:
-    stick = "\n".join(frame)
+def _frame_lata(idx: int) -> list:
+    return _FRAMES_VAPOR[idx] + _LATA_BASE
+
+
+def _painel_creditos(frame_idx: int) -> Panel:
+    linhas = _frame_lata(frame_idx)
     conteudo = Text()
     conteudo.append("\n")
-    conteudo.append(stick, style="bold cyan")
-    conteudo.append("\n\n")
+    # Vapor em ciano claro, lata em amarelo
+    for i, linha in enumerate(linhas):
+        if i < 2:
+            conteudo.append(linha, style="bold cyan")
+        else:
+            conteudo.append(linha, style="bold yellow")
+        conteudo.append("\n")
+    conteudo.append("\n")
     conteudo.append("Desenvolvido por\n", style="dim white")
     conteudo.append("LEONARDO BORA\n", style="bold magenta")
     conteudo.append("\n")
@@ -113,12 +133,12 @@ def _painel_creditos(frame: tuple) -> Panel:
     )
 
 
-def animar_creditos(console: Console, loops: int = 3, delay_s: float = 0.18) -> None:
-    """Stick figure feliz pulando + card de créditos. Dura ~2s, depois deixa parado."""
-    with Live(_painel_creditos(_FRAMES_STICK[0]), console=console, refresh_per_second=15) as live:
+def animar_creditos(console: Console, loops: int = 4, delay_s: float = 0.22) -> None:
+    """Lata estática com vapor subindo + card de créditos. Loop infinito até user dar ENTER."""
+    with Live(_painel_creditos(0), console=console, refresh_per_second=15) as live:
         for _ in range(loops):
-            for frame in _FRAMES_STICK:
-                live.update(_painel_creditos(frame))
+            for i in range(len(_FRAMES_VAPOR)):
+                live.update(_painel_creditos(i))
                 time.sleep(delay_s)
-        # Para no primeiro frame (idle) pra leitura
-        live.update(_painel_creditos(_FRAMES_STICK[0]))
+        # Para no frame 0 pra leitura
+        live.update(_painel_creditos(0))
