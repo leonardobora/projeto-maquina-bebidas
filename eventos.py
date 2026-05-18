@@ -87,8 +87,13 @@ def resolver_tapa_livre(rng: Optional[random.Random] = None) -> ResultadoTapaLiv
     return ResultadoTapaLivre.NADA
 
 
-def mensagem(categoria: str, bebida: str = "", rng: Optional[random.Random] = None) -> str:
+def mensagem(
+    categoria: str,
+    bebida: str = "",
+    rng: Optional[random.Random] = None,
+    **kwargs,
+) -> str:
     rng = rng or random
     opcoes = _MENSAGENS[categoria]
     template = rng.choice(opcoes)
-    return template.format(bebida=bebida)
+    return template.format(bebida=bebida, **kwargs)

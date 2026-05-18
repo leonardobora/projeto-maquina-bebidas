@@ -72,7 +72,7 @@ def executar_cooldown(console: Console, segundos: int, catalogo: Catalogo) -> No
         console.clear()
         console.print(render_idle(catalogo.listar()))
         console.print(render_visor(
-            mensagem("cooldown").format(segundos=restante),
+            mensagem("cooldown", segundos=restante),
             tipo="erro"
         ))
         time.sleep(1)

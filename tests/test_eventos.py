@@ -128,6 +128,11 @@ class TestMensagensTapaLivre(unittest.TestCase):
         msg = mensagem("tapa_livre_quebra", rng=random.Random(0))
         self.assertTrue(len(msg) > 0)
 
+    def test_mensagem_cooldown_formata_segundos(self):
+        msg = mensagem("cooldown", segundos=7, rng=random.Random(0))
+        self.assertIn("7", msg)
+        self.assertNotIn("{segundos}", msg)
+
 
 if __name__ == "__main__":
     unittest.main()
